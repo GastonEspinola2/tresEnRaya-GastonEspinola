@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0"></script>
+    <title>Entrenamiento del Modelo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      #log {
+        white-space: pre-line;
+        background: #f0f0f0;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 20px;
+        max-width: 600px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Entrenar Modelo de Tres en Raya</h1>
+    <button onclick="trainAndSaveModel()">Entrenar y Descargar</button>
+    <div id="log">Esperando entrenamiento...</div>
+
+    <script>
+      async function trainAndSaveModel() {
+        const logDiv = document.getElementById("log");
+        logDiv.textContent = "🔄 Iniciando entrenamiento...\n";
+
+        // Crear modelo
+        const model = tf.sequential();
+        model.add(
+          tf.layers.dense({ inputShape: [9], units: 27, activation: "relu" })
+        );
+        model.add(tf.layers.dense({ units: 9, activation: "softmax" }));
+        model.compile({
+          loss: "categoricalCrossentropy",
+          optimizer: "adam",
+          metrics: ["accuracy"],
+        });
+
+        // Datos de entrenamiento
+        const xs = tf.tensor2d([
+          [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [1, 0, 0, 0, 0, 0, 0, 0, 0],
+          [1, -1, 0, 0, 0, 0, 0, 0, 0],
+          [1, -1, 0, -1, 1, 0, 0, 0, 0],
+          [0, 1, 0, -1, -1, 0, 1, 0, 0],
+          [-1, 1, -1, 1, 1, -1, -1, 0, 0],
+        ]);
+
+        const ys = tf.tensor2d([
+          [0, 0, 1, 0, 0, 0, 0, 0, 0],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 1, 0],
+        ]);
+
+        await model.fit(xs, ys, {
+          epochs: 500,
+          callbacks: {
+            onEpochEnd: (epoch, logs) => {
+              logDiv.textContent += `Epoch ${
+                epoch + 1
+              }/500 - loss: ${logs.loss.toFixed(4)} - acc: ${logs.acc.toFixed(
+                4
+              )}\n`;
+              logDiv.scrollTop = logDiv.scrollHeight;
+            },
+          },
+        });
+
+        logDiv.textContent +=
+          "✅ Entrenamiento completo.\n📥 Guardando modelo...";
+        await model.save("downloads://ttt_model");
+        logDiv.textContent += "\n✅ Modelo descargado.";
+      }
+    </script>
+  </body>
+</html>
